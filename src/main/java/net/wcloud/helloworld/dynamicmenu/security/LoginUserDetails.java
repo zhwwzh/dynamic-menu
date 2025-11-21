@@ -2,6 +2,8 @@ package net.wcloud.helloworld.dynamicmenu.security;
 
 import lombok.Getter;
 import net.wcloud.helloworld.dynamicmenu.entity.User;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -13,71 +15,81 @@ import java.util.stream.Collectors;
 /**
  * LoginUserDetails
  *
- * 这是 Spring Security 在认证过程中使用的“用户安全对象”。
+ * 这是 Spring Security 在用户认证 / 鉴权过程中使用的核心对象。
  *
- * 主要作用：
- * 1. 在登录时，AuthenticationManager 会将 username/password 提交给 UserDetailsService，
- * UserDetailsService 根据用户名加载 UserDetails（也就是此对象）。
+ * 使用场景：
+ * ------------------------------------------------------------
+ * 1. 登录时：UserDetailsService.loadUserByUsername() 返回此对象
+ * 2. 认证成功后：放入 SecurityContextHolder
+ * 3. 每次请求中：JwtAuthenticationFilter 重新构建该对象并放入 SecurityContext
  *
- * 2. Spring Security 会从此对象中获取：
- * - 密码（getPassword）
- * - 用户名（getUsername）
- * - 用户是否启用（isEnabled）
- * - 角色/权限（getAuthorities）
- *
- * 3. 登录成功后，此对象会被存入 SecurityContext（线程上下文），
- * 后续每次请求会通过 JwtAuthenticationFilter 将该对象重新放入 SecurityContext。
+ * 作用：
+ * ------------------------------------------------------------
+ * - 提供用户密码
+ * - 提供用户名
+ * - 提供角色和权限点（组合成 GrantedAuthority）
+ * - 决定用户是否可用（isEnabled）
  */
 @Getter
 public class LoginUserDetails implements UserDetails {
 
+    private static final Logger log = LoggerFactory.getLogger(LoginUserDetails.class);
+
     /**
-     * 绑定你系统的真实 User 实体（来自 dynamicmenu_sys_user）
-     * 这里不直接继承 User，而是使用组合方式，避免污染实体类。
+     * 真实 User 实体
+     * 使用组合而不是继承，避免污染数据库实体
      */
     private final User user;
 
-    /**
-     * 用户角色编码列表（如：["ROLE_ADMIN", "ROLE_USER"]）
-     * 注意：角色必须以 "ROLE_" 开头，Spring Security 才能正确识别。
-     */
+    /** 角色编码列表（必须以 ROLE_ 开头，Security 才能识别） */
     private final List<String> roleCodes;
 
-    /**
-     * 用户权限标识（按钮权限集合，如：["sys:user:list", "sys:user:add"]）
-     * 用于实现按钮级（Action-Level）权限控制。
-     */
+    /** 权限标识列表（按钮级权限，例如："sys:user:list"） */
     private final List<String> permissions;
 
-    /**
-     * 构造方法
-     */
     public LoginUserDetails(User user, List<String> roleCodes, List<String> permissions) {
         this.user = user;
         this.roleCodes = roleCodes;
         this.permissions = permissions;
+
+        log.debug("[LoginUserDetails] 创建 LoginUserDetails 对象, userId={}, username={}, roleCount={}, permCount={}",
+                (user == null ? null : user.getId()),
+                (user == null ? null : user.getUsername()),
+                (roleCodes == null ? 0 : roleCodes.size()),
+                (permissions == null ? 0 : permissions.size()));
     }
 
     /**
-     * 获取当前用户的权限集合（角色 + 权限点）
+     * 返回角色 + 权限点，供 Spring Security 授权判断使用。
      *
-     * Spring Security 授权流程会调用：
-     * getAuthorities() -> List<GrantedAuthority>
+     * Security 中的权限判断规则：
+     * ------------------------------------------------------------
+     * - hasRole("ADMIN") → 实际匹配 ROLE_ADMIN
+     * - hasAuthority("sys:user:list")
      *
-     * 注意：
-     * 1. 角色会以 SimpleGrantedAuthority("ROLE_ADMIN") 的形式加入；
-     * 2. 权限点也会以 SimpleGrantedAuthority("sys:user:list") 的形式加入；
-     * 3. 最终 Security 会将两类权限统一处理，框架会根据 hasRole / hasAuthority 做校验。
+     * 因此此处包含两类数据：
+     * - SimpleGrantedAuthority("ROLE_ADMIN")
+     * - SimpleGrantedAuthority("sys:user:list")
      */
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return getAllAuthorityStrings().stream()
-                .map(SimpleGrantedAuthority::new) // 转为 GrantedAuthority
+        List<String> authorities = getAllAuthorityStrings();
+
+        log.debug("[getAuthorities] 构建 GrantedAuthority 列表, username={}, count={}",
+                user.getUsername(), authorities.size());
+
+        return authorities.stream()
+                .map(SimpleGrantedAuthority::new)
                 .collect(Collectors.toList());
     }
 
     /**
-     * 组合角色 + 权限点字符串
+     * 合并角色编码与权限标识
+     *
+     * 注意事项：
+     * ------------------------------------------------------------
+     * - 必须 DISTINCT 去重，否则重复权限可能导致性能问题
+     * - 若角色列表或权限列表为 null，需要防御式处理
      */
     private List<String> getAllAuthorityStrings() {
         return List.of(
@@ -90,62 +102,59 @@ public class LoginUserDetails implements UserDetails {
     }
 
     /**
-     * 返回加密后的密码
-     *
-     * 用于登录认证时，AuthenticationProvider 会自动调用此方法，
-     * 并使用 PasswordEncoder.matches(原始密码，加密后的密码) 进行校验。
+     * 返回数据库中保存的加密密码
      */
     @Override
     public String getPassword() {
-        return user.getPassword();
+        String pwd = user.getPassword();
+        log.debug("[getPassword] 获取密码（已加密），username={}, passwordLength={}",
+                user.getUsername(), pwd == null ? 0 : pwd.length());
+        return pwd;
     }
 
     /**
-     * 返回用户名（登录名）
+     * 返回用户名
      */
     @Override
     public String getUsername() {
-        return user.getUsername();
+        String username = user.getUsername();
+        log.debug("[getUsername] 获取 username={}", username);
+        return username;
     }
 
-    /**
-     * 账户是否未过期
-     * 一般不使用此功能，全项目统一返回 true 即可
-     */
+    /** 账户是否未过期，项目未做控制统一返回 true */
     @Override
     public boolean isAccountNonExpired() {
         return true;
     }
 
-    /**
-     * 账户是否未锁定
-     * 你可以在 User 表中增加锁定字段并在此处理
-     */
+    /** 账户是否未锁定，如需要可扩展 User.locked 字段 */
     @Override
     public boolean isAccountNonLocked() {
         return true;
     }
 
-    /**
-     * 凭据是否未过期
-     * 一般不做密码有效期限制，这里默认 true 即可
-     */
+    /** 密码凭证是否有效（一般不用） */
     @Override
     public boolean isCredentialsNonExpired() {
         return true;
     }
 
     /**
-     * 是否启用账号（此方法最常使用）
-     *
-     * 绑定你自己的 User 表字段：
-     * status = 1 → Enabled（启用）
-     * status = 0 → Disabled（禁用）
-     *
-     * 如果返回 false，则 Security 会抛异常“User is disabled”
+     * 是否启用账号（安全控制最常用字段）
+     * status = 1 → 启用
+     * status !=1 → 禁用
      */
     @Override
     public boolean isEnabled() {
-        return user.getStatus() != null && user.getStatus() == 1;
+        boolean enabled = user.getStatus() != null && user.getStatus() == 1;
+
+        if (!enabled) {
+            log.warn("[isEnabled] 用户已被禁用, userId={}, username={}", user.getId(), user.getUsername());
+        } else {
+            log.debug("[isEnabled] 用户可用, username={}", user.getUsername());
+        }
+
+        return enabled;
     }
 }

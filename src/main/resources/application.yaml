@@ -21,7 +21,14 @@ mybatis-plus:
 
 logging:
   level:
-    net.wcloud.helloworld.dynamicmenu: debug
+    root: INFO
+    org.springframework.security: INFO
+    org.springframework.security.web: DEBUG
+    org.apache.ibatis: DEBUG
+    com.baomidou.mybatisplus.core: DEBUG
+    com.baomidou.mybatisplus.extension: DEBUG
+    com.zaxxer.hikari: INFO
+    net.wcloud.helloworld: DEBUG
 
 app:
   jwt:

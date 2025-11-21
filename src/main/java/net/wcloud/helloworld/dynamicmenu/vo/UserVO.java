@@ -34,11 +34,5 @@ public class UserVO {
     /** 按钮权限集合（Permission List），如：["sys:user:list"] */
     private List<String> permissions;
 
-    // TODO UserVO 带上菜单树
-    /**
-     * 前端通常关心“菜单树 + 权限点”
-     * 如果你需要，UserVO 也可以带菜单树
-     * 这里留作可选 —— 如需我也能帮你加上
-     */
     private List<MenuVO> menus;
 }
