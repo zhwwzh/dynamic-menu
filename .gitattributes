@@ -1,2 +1,29 @@
-/mvnw text eol=lf
-*.cmd text eol=crlf
+# 统一文本文件行尾为 LF（跨平台开发友好）
+* text eol=lf
+
+# 常见文本文件，确保按文本方式处理
+*.java    text
+*.xml     text
+*.yml     text
+*.yaml    text
+*.properties text
+*.md      text
+*.sql     text
+*.html    text
+*.js      text
+*.ts      text
+*.css     text
+
+# 二进制文件，不做行尾转换
+*.jar     binary
+*.zip     binary
+*.png     binary
+*.jpg     binary
+*.jpeg    binary
+*.gif     binary
+*.ico     binary
+*.pdf     binary
+
+# Windows & shell 脚本保持可执行位
+*.sh      text eol=lf
+*.bat     text eol=crlf

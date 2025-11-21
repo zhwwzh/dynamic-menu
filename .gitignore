@@ -1,36 +1,50 @@
-HELP.md
+##############################
+# Maven
+##############################
 target/
+!.mvn/wrapper/maven-wrapper.properties
 .mvn/wrapper/maven-wrapper.jar
-!**/src/main/**/target/
-!**/src/test/**/target/
+HELP.md
 
-### STS ###
-.apt_generated
-.classpath
-.factorypath
-.project
-.settings
-.springBeans
-.sts4-cache
+##############################
+# Logs（项目日志目录）
+##############################
+logs/
+*.log
 
-### IntelliJ IDEA ###
-.idea
-*.iws
-*.iml
-*.ipr
-
-### NetBeans ###
-/nbproject/private/
-/nbbuild/
-/dist/
-/nbdist/
-/.nb-gradle/
-build/
-!**/src/main/**/build/
-!**/src/test/**/build/
-
-### VS Code ###
+##############################
+# VS Code（工作区配置不提交）
+##############################
 .vscode/
 
-### logs ###
-.logs/
+##############################
+# Java 编译输出
+##############################
+*.class
+
+##############################
+# Spring Boot 临时文件
+##############################
+*.pid
+*.swp
+*.swo
+
+##############################
+# 系统文件（Windows / macOS）
+##############################
+.DS_Store
+Thumbs.db
+
+##############################
+# Ignore IntelliJ / Eclipse / NetBeans
+#（即使不用，避免有人误放）
+##############################
+.idea/
+*.iml
+.project
+.classpath
+.settings/
+nbproject/
+nbbuild/
+dist/
+build/

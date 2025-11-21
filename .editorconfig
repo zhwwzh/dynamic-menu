@@ -1,0 +1,27 @@
+# 顶层 EditorConfig
+root = true
+
+# 通用规则
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+indent_style = space
+indent_size = 4
+trim_trailing_whitespace = true
+
+# Markdown 可以保留尾部空格
+[*.md]
+trim_trailing_whitespace = false
+
+# YAML / YML (application.yaml 等)，常用 2 空格缩进
+[*.{yml,yaml}]
+indent_size = 2
+
+# JSON / 配置文件，2 空格缩进更常见
+[*.{json,code-workspace}]
+indent_size = 2
+
+# 前端文件
+[*.{js,ts,jsx,tsx,html,css,scss,vue}]
+indent_size = 2
