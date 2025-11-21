@@ -1,14 +1,16 @@
 # Dynamic Menu Permission System (基于 Spring Boot 的动态菜单权限系统)
 
+参考：[SpringBoot 动态菜单权限系统设计的企业级解决方案](https://mp.weixin.qq.com/s?__biz=MzE5OTE4NTQ3OQ==&mid=2247484671&idx=1&sn=6f7b424781ed6d2ab2746b5fa61e6365&chksm=969101d7a1e688c18522351e41fb8c158115391667c696874b82d60cdce2d355728064a3f92a&cur_album_id=4151501764258316307&scene=189#wechat_redirect)
+
 基于 **Spring Boot 3 + Spring Security + JWT + MyBatis-Plus** 实现的
 **后端 RBAC 权限管理系统**，支持：
 
--   ✔ 动态菜单（多角色合并）
--   ✔ 按钮级权限（perms 标识）
--   ✔ JWT 无状态认证
--   ✔ 角色授权（菜单树勾选）
--   ✔ 用户管理
--   ✔ 分层清晰的可扩展架构
+-   动态菜单（多角色合并）
+-   按钮级权限（perms 标识）
+-   JWT 无状态认证
+-   角色授权（菜单树勾选）
+-   用户管理
+-   分层清晰的可扩展架构
 
 适合作为后台系统、SaaS 管理平台等项目的通用权限模块。
 
